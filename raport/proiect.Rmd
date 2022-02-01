@@ -1,0 +1,145 @@
+---
+title: "Proiect Probabilități și Statistică - infracțiunile din Statele Unite ale Americii comise în anul 1973"
+author: "Toader Vlad-Marian, Florea Maria-Alexandra, Cordun Diana-Alexandra"
+date: "28-01-2022"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+knitr::opts_chunk$set(echo = TRUE)
+```
+&nbsp;
+
+## Descrierea proiectului
+
+Aplicația noastră utilizează date din DataFrame-ul USArrests, creat pe baza unui studiu efectuat pe un eșantion de 100,000 persoane în anul 1973: crime, asalturi și agresiuni sexuale. 
+
+Pentru realizarea proiectului, am utilizat librăriile shiny și data.table.
+
+## Secțiunea principală a aplicației
+
+În secțiunea principală a aplicației, avem două grafice și un tabel.
+
+## Grafic de tip barplot
+
+Codul de mai jos creează graficul cu informații generale despre infracțiunile comise în toate statele în anul 1973.
+
+``` {r grafic, results="hide", eval=FALSE}
+output$generalPlot <- renderPlot({
+    
+    state.names <- row.names(USArrests)
+    barplot(USArrests$Assault,names.arg = state.names, las = 2, ylab = "Rata de arest per 100,000", main = "Rata de arest din SUA în 1973", ylim = c(0,350), col = "green")
+    barplot(USArrests$Rape, las = 2, col = "blue", add = TRUE)
+    barplot(USArrests$Murder, las=2, col = "red", add = TRUE)
+    
+    legend(x = "topright", legend = c('Asalt','Agresiune sexuală','Crimă'),col=c("green","blue","red"),pch=15)
+
+    })
+```
+
+Rezultatul codului scris anterior este graficul următor:
+
+```{r grafic1, echo=FALSE}
+state.names <- row.names(USArrests)
+    barplot(USArrests$Assault,names.arg = state.names, las = 2, ylab = "Rata de arest per 100,000", main = "Rata de arest din SUA în 1973", ylim = c(0,350), col = "green")
+    barplot(USArrests$Rape, las = 2, col = "blue", add = TRUE)
+    barplot(USArrests$Murder, las=2, col = "red", add = TRUE)
+    
+    legend(x = "topright", legend = c('Asalt','Agresiune sexuală','Crimă'),col=c("green","blue","red"),pch=15)
+```
+
+## Diagrama de împrăștiere
+
+Următorul cod creează o diagramă de împrăștiere care reprezintă într-un sistem de axe, având coordonate rata de asalt și rata de crimă, fiecare stat.
+
+``` {r imprastiere, results="hide", eval=FALSE}
+ output$scatterPlot <- renderPlot({
+    plot(y = USArrests$Murder, x = USArrests$Assault, xlab = "Rata de asalt", ylab = "Rata de crimă", main = "Rata de crimă vs. rata de atac, SUA, 1973")
+  })
+```
+
+Diagrama arată astfel:
+
+```{r imprastiere1, echo=FALSE}
+plot(y = USArrests$Murder, x = USArrests$Assault, xlab = "Rata de asalt", ylab = "Rata de crimă", main = "Rata de crimă vs. rata de atac, SUA, 1973")
+
+```
+
+## Tabel cu date
+
+Următoarea bucată de cod preia datele din DataFrame-ul USArrests și le afișează sub formă de tabel.
+
+```{r tabel, results="hide", eval=FALSE}
+ output$table <- renderDataTable({
+    
+    keep <- c("Murder", "Assault", "Rape")
+    
+    df <- USArrests[keep]
+    
+    colnames(df) <- c('Rata de crimă','Rata de asalt','Rata de agresiune sexuală')
+    
+    as.data.table(df, keep.rownames="Stat")})
+```
+
+Datele sunt afișate astfel:
+
+```{r tabel1, echo=FALSE}
+keep <- c("Murder", "Assault", "Rape")
+    
+    df <- USArrests[keep]
+    
+    colnames(df) <- c('Rata de crimă','Rata de asalt','Rata de agresiune sexuală')
+    
+    library(knitr)
+    kable(df)
+```
+
+## Secțiunea particulară per stat
+
+Folosind următorul cod, am creat o secțiune prin care, utilizând o listă drop-down, se pot vizualiza informații despre infracțiunile din fiecare stat, în funcție de alegerea făcută.
+
+În partea de user interface:
+```{r dropdown, results="hide", eval=FALSE}
+    sidebarPanel(
+      
+      selectInput("var", 
+                  label = "Alegeți un stat pentru a vedea statistici detaliate",
+                  choices = row.names(USArrests),
+                  selected = "Alabama"),
+      textOutput("selected_var"),
+      br(),
+      plotOutput(outputId = "statePlot"),
+      
+    )
+```
+
+În partea de server:
+```{r dropdown1, results="hide", eval=FALSE}
+output$statePlot <- renderPlot({
+    
+    keep <- c("Assault", "Rape", "Murder")
+    
+    barplot(t(USArrests[input$var,][keep]), beside=TRUE,  ylab = "Rata de arest per 100,000", main = paste("Rata de arest din ", input$var, ", 1973", sep=""), ylim = c(0,350), col=c("green", "blue", "red"))
+    
+      legend(x = "topright", legend = c('Asalt','Agresiune sexuală','Crimă'),col=c("green","blue","red"),pch=15, cex = .75)
+
+output$selected_var <- renderText({ 
+    paste('Statul selectat: ', input$var, sep="")
+  })
+  })
+```
+
+Rezultatul codurilor de mai sus este următoarea secțiune (dacă este selectat statul California):
+
+```{r dropdownfinal, echo=FALSE}
+      
+    keep <- c("Assault", "Rape", "Murder")
+    
+    barplot(t(USArrests["California",][keep]), beside=TRUE,  ylab = "Rata de arest per 100,000", main = "Rata de arest din California, 1973", ylim = c(0,350), col=c("green", "blue", "red"))
+    
+      legend(x = "topright", legend = c('Asalt','Agresiune sexuală','Crimă'),col=c("green","blue","red"),pch=15, cex = .75)
+```
+
+
